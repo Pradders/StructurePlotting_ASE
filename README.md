@@ -227,7 +227,7 @@ See examples under the "Figures" and "Systems" folders. Two example figures are 
 
 ![Figure 2: Example figure of furfural adsorbed on Ni(111) alongside other H atoms](Figures/FUR_8H.png)
 <p align="center">
-  <em>Figure 1: Example figure of furfural adsorbed on Ni(111) alongside other H atoms.</em>
+  <em>Figure 2: Example figure of furfural adsorbed on Ni(111) alongside other H atoms.</em>
 </p>
 
 # Requirements

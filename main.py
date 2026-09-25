@@ -6,12 +6,6 @@ from inputs import choose_shift_mode
 from shift import get_structure_shift,apply_shift
 from plotting import plot_surface_views, prepare_visual_structure
 
-# Find structure files
-#contcars = glob.glob("**/CONTCAR*", recursive=True)
-#structure_files = contcars + [file for file in glob.glob("**/POSCAR*", recursive=True)
-#    if not any(os.path.dirname(file) == os.path.dirname(c) for c in contcars)]
-#print(f"Found {len(structure_files)} structure files.")
-
 # Optional reference structure used to keep the substrate representation consistent across different systems.
 # Use reference_folder = None to analyse structures without an external reference.
 # Else, direct the variable to the folder containing the relevant CONTCAR/POSCAR file.

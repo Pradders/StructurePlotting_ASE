@@ -6,38 +6,47 @@ from inputs import choose_shift_mode
 from shift import get_structure_shift,apply_shift
 from plotting import plot_surface_views, prepare_visual_structure
 
-# Optional reference structure used to keep the substrate representation consistent across different systems.
-# Use reference_folder = None to analyse structures without an external reference.
-# Else, direct the variable to the folder containing the relevant CONTCAR/POSCAR file.
-reference_folder = "Reference"
-#reference_folder = None
+# Reference structure settings
+
+# IMPORTANT:
+# Ensure that the reference structure and input structures have compatible unit cell dimensions and orientation, and that the selected substrate atoms are listed in the same order.
+# The reference structure is used to provide a consistent substrate representation in the plotted structures.
+# If the atoms and unit cell do not match, then include_reference should be set to False.
 
 include_reference = True
 
-# Find structure files
-structure_files = [
-    file for file in glob.glob("**/CONTCAR*", recursive=True)
-    if reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder
-    ] + [
-    file for file in glob.glob("**/POSCAR*", recursive=True)
-    if (reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder)
-    and not any(
-        os.path.dirname(file) == os.path.dirname(c)
-        for c in glob.glob("**/CONTCAR*", recursive=True)
-    )
-    ]
-print(f"Found {len(structure_files)} structure files.")
+# Folder containing the reference CONTCAR/POSCAR. The folder is called "Reference" by default, but this can be altered.
+# Set include_reference = False to process structures without an external reference.
+reference_folder = "Reference" if include_reference else None
 
-# Elements that belong to the reference substrate
-reference_symbols = ("Ni",)
+# Reference structure settings
+if include_reference:
 
-if reference_folder is not None:
+    # Elements that belong to the reference substrate
+    reference_symbols = ("Ni",)
+
+    #Collect the atoms within the reference folder
     reference_atoms = get_reference_structure(
         reference_folder,
         repeat=(1, 1, 1)
     )
 else:
+    reference_symbols = None
     reference_atoms = None
+
+# Find structure files
+structure_files = [
+    file for file in glob.glob("**/CONTCAR", recursive=True)
+    if reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder
+    ] + [
+    file for file in glob.glob("**/POSCAR", recursive=True)
+    if (reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder)
+    and not any(
+        os.path.dirname(file) == os.path.dirname(c)
+        for c in glob.glob("**/CONTCAR", recursive=True)
+    )
+    ]
+print(f"Found {len(structure_files)} structure files.")
 
 # Shift
 shift_mode = choose_shift_mode()

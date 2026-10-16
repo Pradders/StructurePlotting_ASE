@@ -16,8 +16,7 @@ def choose_shift_mode():
 
         1: Same shift for ALL images in ALL systems
         2: Manual shift for EACH image
-        3: Same shift for ALL images in EACH system
-        4: No shift
+        3: No shift
     """
 
     global _current_mode
@@ -28,10 +27,9 @@ def choose_shift_mode():
     while True:
 
         print("\nSelect shift mode:")
-
         print("1: SAME shift for ALL structures")
         print("2: MANUAL shift for EACH structure")
-        print("3: NO shift to ANY structure")
+        print("3: NO shift")
 
         mode = get_int("Enter mode (1/2/3): ")
 

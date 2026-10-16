@@ -24,7 +24,7 @@ def get_atom_colors(atoms,element_colors=None):
 
     return colors
 
-#Prepare a visual copy of an NEB image so that the selected reference atoms use the same periodic representation as the reference structure.
+# Prepare a visual copy of a structure using the reference substrate representation.
 def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
 
     visual_reference = reference_atoms.copy()
@@ -36,8 +36,7 @@ def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
     cell = atoms.get_cell()
 
     #Keep track of the occurrence number of each element.
-    #This allows the reference structure to contain more than
-    #one type of substrate atom.
+    #This allows the reference structure to contain more than one type of substrate atom.
     reference_indices = {}
     current_indices = {}
 
@@ -82,15 +81,14 @@ def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
 
                     total_distance += distance**2
 
-            # Keep the common translation giving the smallest
-            # total distance for all reference atoms.
+            # Keep the common translation giving the smallest total distance for all reference atoms.
             if total_distance < best_distance:
 
                 best_distance = total_distance
                 best_shift = np.array([x_shift, y_shift, 0.0])
 
 
-    # Apply the SAME periodic translation to the entire structure.
+    # Apply the selected periodic translation to the reference substrate.
     reference_scaled += best_shift
     visual_reference.set_cell(cell)
     visual_reference.set_scaled_positions(reference_scaled)

@@ -13,7 +13,6 @@ _current_shift = None
 #Find the highest radius to perform the shift
 def max_radius(atoms):
     symbols = atoms.get_chemical_symbols() #collect the elemental symbols
-
     radii = [covalent_radii[atomic_numbers[s]] for s in symbols] #Collect the radii
     diameter = 2*max(radii) #Calculate the diameter
 
@@ -56,7 +55,7 @@ def build_shift(atoms, get_int):
     print("\nPreviewing structure.")
     view_cleanup(atoms)
 
-    print(f"\nManual shift using max_radius = f{d:.3f} Å")
+    print(f"\nManual shift using max_radius = {d:.3f} Å")
 
     # User-defined shifts
     nx = get_int("Shift in x (multiples of diameter, negative = left, positive = right): ")
@@ -74,7 +73,7 @@ def apply_shift(atoms, shift):
     atoms_translate.wrap()
     return atoms_translate
 
-def get_structure_shift(atoms,mode,system_shift=None):
+def get_structure_shift(atoms,mode):
 
     global _current_shift
 
@@ -91,7 +90,7 @@ def get_structure_shift(atoms,mode,system_shift=None):
 
         return build_shift(atoms,get_int)
 
-    #Same shift across each system
+    #No shift
     elif mode == 3:
 
         return np.zeros(3)

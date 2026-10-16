@@ -1,12 +1,11 @@
 # StructurePlotting_ASE
 A Python plotting utility using ASE to load VASP `POSCAR`/`CONTCAR` structures, optionally shift atomic positions, and generate top and side views of the structures.
-**Version 1.1.0 (v1.1.0)** — current release.
+**Version 1.2.0 (v1.2.0)** — current release.
 
 Updates in **v1.1.0**
-* JSON-related functions have been removed from io_utils.
-* An optional reference surface can now be used for consistent substrate visualisation.
-* Calculated positions of non-reference atoms are retained when using a reference surface.
-* The reference surface and example files/folders are optional and can be deleted and replaced with the user's own structures.
+* Improved reference structure loading and error handling.
+* Clarified reference compatibility requirements and shift-mode descriptions.
+* Standardised structure-related error messages for general use.
 
 # Overview
 The code can:
@@ -17,6 +16,7 @@ The code can:
 * Preview structures before applying a manual shift.
 * Apply either a common or individual shift in case the adsorbates extend over the unit cell x,y dimension boundaries.
 * Optionally use a reference surface to provide a consistent substrate representation across different structures.
+* Check that requested reference elements exist and that their atom counts match the input structures.
 * Check compatibility between the structures and the reference surface.
 * Replace the substrate atoms in the visual representation with the corresponding reference surface.
 * Preserve the calculated positions of adsorbates and other non-reference atoms when using the reference surface.
@@ -48,6 +48,8 @@ When an external reference structure is used, the elements belonging to the refe
 ```python
 reference_symbols = ("Ni",)
 ```
+
+The reference and input structures must have compatible unit cell dimensions and orientations, with the selected substrate atoms listed in the same order. If these assumptions are not satisfied, disable the external reference structure.
 
 ## Shifting
 Structures can optionally be shifted in the x and y directions.
@@ -100,6 +102,10 @@ When a reference structure is provided, the program:
 ```
 
 The adsorbate atoms are not moved onto ideal reference adsorption sites. Therefore, small deviations of atoms such as H from ideal hollow, bridge, or top sites are retained in the visual representation. This is important because the calculated adsorbate geometry may result from interactions with other adsorbates, molecules, and the relaxed substrate. Automatically moving the adsorbates to ideal reference sites would change the calculated geometry. The reference surface should therefore be regarded as a visualisation aid for consistent substrate representation, rather than as the actual relaxed substrate geometry.
+
+Periodic alignment assumes that the required translation can be handled by shifts of −1, 0, or +1 along the first two fractional coordinates.
+
+If the reference structure cannot be loaded, an informative error is raised instead of silently continuing without the requested reference.
 
 # Colour coding
 Atoms are coloured according to their chemical element. Specific colours can be defined in `main.py`. For example:

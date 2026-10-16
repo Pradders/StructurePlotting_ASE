@@ -2,7 +2,7 @@
 A Python plotting utility using ASE to load VASP `POSCAR`/`CONTCAR` structures, optionally shift atomic positions, and generate top and side views of the structures.
 **Version 1.2.0 (v1.2.0)** — current release.
 
-Updates in **v1.1.0**
+Updates in **v1.2.0**
 * Improved reference structure loading and error handling.
 * Clarified reference compatibility requirements and shift-mode descriptions.
 * Standardised structure-related error messages for general use.

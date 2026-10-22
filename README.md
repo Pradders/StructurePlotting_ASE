@@ -3,9 +3,14 @@ A Python plotting utility using ASE to load VASP `POSCAR`/`CONTCAR` structures, 
 **Version 1.2.0 (v1.2.0)** — current release.
 
 Updates in **v1.2.0**
+* Refactored main.py to organise the workflow within main() and use if __name__ == "__main__": main() for controlled execution.
+* Preserved existing configuration options, defaults and functionality while preventing the workflow from running automatically when main.py is imported.
 * Improved reference structure loading and error handling.
 * Clarified reference compatibility requirements and shift-mode descriptions.
 * Standardised structure-related error messages for general use.
+
+# Related projects
+This repository is part of a collection of ASE-based tools for visualising VASP structures. [BaderTransition_atomplot](https://github.com/Pradders/BaderTransition_atomplot) extends related structural visualisation concepts to Bader charge differences between initial and final states.
 
 # Overview
 The code can:

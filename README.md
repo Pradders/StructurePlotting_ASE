@@ -10,7 +10,10 @@ Updates in **v1.2.0**
 * Standardised structure-related error messages for general use.
 
 # Related projects
-This repository is part of a collection of ASE-based tools for visualising VASP structures. [BaderTransition_atomplot](https://github.com/Pradders/BaderTransition_atomplot) extends related structural visualisation concepts to Bader charge differences between initial and final states.
+This repository is part of a collection of ASE-based tools for visualising VASP structures and analysing Bader charge changes.
+* [StructurePlotting_ASE](https://github.com/Pradders/StructurePlotting_ASE) — General visualisation of VASP structures, including top and side views, atomic shifting and optional reference-surface alignment.
+* [BaderTransition_atomplot](https://github.com/Pradders/BaderTransition_atomplot) — Visualisation of Bader charge differences between initial and final structures.
+* [BaderTransition_catalyst](https://github.com/Pradders/BaderTransition_catalyst) — Catalyst-specific Bader charge analysis, comparing corresponding catalyst atoms even when the total number of atoms differs between structures.
 
 # Overview
 The code can:

@@ -1,13 +1,15 @@
 # StructurePlotting_ASE
 A Python plotting utility using ASE to load VASP `POSCAR`/`CONTCAR` structures, optionally shift atomic positions, and generate top and side views of the structures.
-**Version 1.2.0 (v1.2.0)** — current release.
+**Version 2.0.0 (v2.0.0)** — current release.
 
-Updates in **v1.2.0**
-* Refactored main.py to organise the workflow within main() and use if __name__ == "__main__": main() for controlled execution.
-* Preserved existing configuration options, defaults and functionality while preventing the workflow from running automatically when main.py is imported.
-* Improved reference structure loading and error handling.
-* Clarified reference compatibility requirements and shift-mode descriptions.
-* Standardised structure-related error messages for general use.
+Updates in **v2.0.0**
+* Added validation of reference element symbols and user-defined element colours.
+* Improved reference-structure compatibility checks, including unit-cell dimensions, orientation, and the number of selected reference atoms.
+* Added handling for structures that do not contain any of the selected reference elements. In this case, a warning is printed and the original structure is plotted without reference replacement.
+* Clarified the reference atom-ordering requirement, where selected atoms of each element are paired according to their occurrence order in the input and reference structures.
+* Added an option to disable the external reference structure.
+* Introduced a reusable confirmation function for user selections.
+* Specified input validation and error messages for reference settings and structure processing.
 
 # Related projects
 This repository is part of a collection of ASE-based tools for visualising VASP structures and analysing Bader charge changes.
@@ -25,10 +27,13 @@ The code can:
 * Preview structures before applying a manual shift.
 * Apply either a common or individual shift in case the adsorbates extend over the unit cell x,y dimension boundaries.
 * Optionally use a reference surface to provide a consistent substrate representation across different structures.
+* Run without an external reference surface when reference replacement is not required.
 * Check that requested reference elements exist and that their atom counts match the input structures.
 * Check compatibility between the structures and the reference surface.
+* Retain the original structure if none of the selected reference elements are present in an input structure.
 * Replace the substrate atoms in the visual representation with the corresponding reference surface.
 * Preserve the calculated positions of adsorbates and other non-reference atoms when using the reference surface.
+* Validate user-defined element symbols and colour values.
 * Colour atoms according to their elements.
 * Generate top and side views.
 * Save the resulting figures as `.png` files.
@@ -53,12 +58,18 @@ To disable the external reference structure:
 reference_folder = None
 ```
 
+When the program starts, the user can choose whether to use the external reference folder or run without a reference structure. If no reference is selected, the reference folder and reference symbols are set to `None`.
+
 When an external reference structure is used, the elements belonging to the reference substrate are specified using `reference_symbols`. For example, for a pure Ni substrate:
 ```python
 reference_symbols = ("Ni",)
 ```
 
-The reference and input structures must have compatible unit cell dimensions and orientations, with the selected substrate atoms listed in the same order. If these assumptions are not satisfied, disable the external reference structure.
+The reference element symbols must be valid chemical element symbols. Invalid symbols raise a `ValueError`.
+
+The reference and input structures must have compatible unit-cell dimensions and orientations. The selected reference atoms must also occur in the same order, element by element, in both structures. The code pairs the first occurrence of each selected element in the input structure with the first occurrence in the reference structure, the second with the second, and so on.
+
+This ordering is an assumption made by the reference-alignment procedure; the code does not independently identify the physical identity of each atom. If these assumptions are not satisfied, disable the external reference structure.
 
 ## Shifting
 Structures can optionally be shifted in the x and y directions.
@@ -97,24 +108,31 @@ Each structure is individually previewed and a separate x/y shift can be specifi
 No translation is applied to the structures.
 
 # Reference surface
-An optional reference structure can be used to provide a consistent substrate representation across different systems. For example, when comparing several structures containing a Ni substrate, the Ni atoms in the individual calculated structures may have slightly different relaxed positions. The reference structure provides a common Ni surface for the visual representation. Please note that the reference surface is used only for visualisation. The calculated positions of adsorbates and other non-reference atoms are retained.
+An optional reference structure can be used to provide a consistent substrate representation across different systems. For example, when comparing several structures containing a Ni substrate, the Ni atoms in the individual calculated structures may have slightly different relaxed positions. The reference structure provides a common Ni surface for the visual representation.
+
+Please note that the reference surface is used only for visualisation. The calculated positions of adsorbates and other non-reference atoms are retained.
+
+The external reference is only applied when selected by the user. When no reference is selected, the input structures are plotted without reference replacement.
 
 ## Reference structure processing
 When a reference structure is provided, the program:
 ```text
 1. Loads the reference structure.
 2. Checks that the reference structure is compatible with the structure being processed.
-3. Determines the periodic representation of the structure that best matches the reference surface.
-4. Applies the same periodic translation to the entire structure.
-5. Uses the reference substrate atoms in the visual representation.
-6. Retains the calculated positions of all non-reference atoms, such as H, C, or other adsorbates.
+3. Checks the selected reference elements and their atom counts.
+4. Determines the periodic representation of the structure that best matches the reference surface.
+5. Applies the same periodic translation to the entire structure.
+6. Uses the reference substrate atoms in the visual representation.
+7. Retains the calculated positions of all non-reference atoms, such as H, C, or other adsorbates.
 ```
+
+If none of the selected reference elements are present in an input structure, the program prints a warning and plots the original structure without reference replacement. If some selected elements are present but the required element counts do not match, an error is raised.
 
 The adsorbate atoms are not moved onto ideal reference adsorption sites. Therefore, small deviations of atoms such as H from ideal hollow, bridge, or top sites are retained in the visual representation. This is important because the calculated adsorbate geometry may result from interactions with other adsorbates, molecules, and the relaxed substrate. Automatically moving the adsorbates to ideal reference sites would change the calculated geometry. The reference surface should therefore be regarded as a visualisation aid for consistent substrate representation, rather than as the actual relaxed substrate geometry.
 
 Periodic alignment assumes that the required translation can be handled by shifts of −1, 0, or +1 along the first two fractional coordinates.
 
-If the reference structure cannot be loaded, an informative error is raised instead of silently continuing without the requested reference.
+The reference structure must contain the requested reference elements, and its unit-cell matrix must be compatible with that of the input structure. If a valid reference structure cannot be loaded, a `FileNotFoundError` is raised rather than silently continuing without the requested reference.
 
 # Colour coding
 Atoms are coloured according to their chemical element. Specific colours can be defined in `main.py`. For example:
@@ -125,6 +143,8 @@ element_colors = {
     "C": "black"
 }
 ```
+
+User-defined element symbols and colour values are validated. Invalid chemical symbols or colour specifications raise a `ValueError`.
 
 Elements not explicitly assigned a colour use the ASE/Jmol default colours.
 
@@ -187,7 +207,20 @@ Saved: Figures/system_1.png
 
 # Inputs
 
-## Mode selection
+## Reference selection
+
+When an external reference structure is configured, the program asks the user to select whether to use it:
+
+```text
+Select reference mode:
+1: No reference
+2: Use external reference folder
+Enter 1 or 2:
+```
+
+The selected option must be confirmed before proceeding.
+
+## Shift mode selection
 
 When the program starts, the user is asked to select a shift mode:
 
@@ -201,10 +234,10 @@ Select shift mode:
 Enter mode (1/2/3):
 ```
 
-The selected mode must be confirmed:
+The selected option must be confirmed using the generic confirmation prompt:
 
 ```text
-Confirm mode 1? (y/n):
+Accept this result/outcome? (y/n):
 ```
 
 If an invalid value is entered, the program will ask again.
@@ -250,7 +283,9 @@ Contains functions for collecting user input.
 
 ```python
 get_int()
+confirm()
 choose_shift_mode()
+get_reference_settings()
 ```
 
 ## `load.py`

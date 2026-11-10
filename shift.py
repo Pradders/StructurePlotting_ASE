@@ -10,13 +10,11 @@ from inputs import get_int #import external functions
 #Global variables
 _current_shift = None
 
-#Find the highest radius to perform the shift
+#Calculate maximum covalent radius based on the elements present
 def max_radius(atoms):
-    symbols = atoms.get_chemical_symbols() #collect the elemental symbols
-    radii = [covalent_radii[atomic_numbers[s]] for s in symbols] #Collect the radii
-    diameter = 2*max(radii) #Calculate the diameter
-
-    return diameter
+    symbols = atoms.get_chemical_symbols()
+    radii = [covalent_radii[atomic_numbers[s]] for s in symbols]
+    return max(radii) #Use the diameter instead for future calculations
 
 #Create a temporary preview of the structure. The temporary image is deleted after inspection.
 def view_cleanup(atoms,filename="temp_view.png",pause=True):
@@ -44,33 +42,37 @@ def view_cleanup(atoms,filename="temp_view.png",pause=True):
         pass
 
 #Manual shift based on multiples of the diameter corresponding to the maximum covalent radius
-def build_shift(atoms, get_int):
+def build_shift(atoms):
     #Start as a vector of zeroes
     shift = np.zeros(3)
 
     # Maximum atomic diameter
-    d = max_radius(atoms)
+    d = 2*max_radius(atoms)
 
     # Preview
     print("\nPreviewing structure.")
     view_cleanup(atoms)
 
-    print(f"\nManual shift using max_radius = {d:.3f} Å")
+    #Print a message to present the shift, especially in case of changes to the relative atom
+    print(f"\nManual shift using the maximum radius (converted to diameter) = {d:.3f} Å")
 
     # User-defined shifts
     nx = get_int("Shift in x (multiples of diameter, negative = left, positive = right): ")
     ny = get_int("Shift in y (multiples of diameter, negative = down, positive = up): ")
     # Convert multiples into Cartesian shift
-    shift[0] = nx * d
-    shift[1] = ny * d
+    shift[0] = nx*d
+    shift[1] = ny*d
 
     return shift
 
-#Apply a translation to an atomic structure. The original structure is not modified.
+#Apply a shift to an atomic structure
 def apply_shift(atoms, shift):
-    atoms_translate = atoms.copy()
-    atoms_translate.translate(shift)
-    atoms_translate.wrap()
+
+    atoms_translate = atoms.copy() #Cannot return atoms without changing variable name, otherwise the original structure will be retained
+    atoms_translate.translate(shift) #Shift here
+    atoms_translate.wrap() #Wrap back into unit cell
+
+    #Return translated atoms
     return atoms_translate
 
 def get_structure_shift(atoms,mode):
@@ -81,14 +83,14 @@ def get_structure_shift(atoms,mode):
     if mode == 1:
 
         if _current_shift is None:
-            _current_shift = build_shift(atoms,get_int)
+            _current_shift = build_shift(atoms)
 
         return _current_shift
 
     #Manual shift
     elif mode == 2:
 
-        return build_shift(atoms,get_int)
+        return build_shift(atoms)
 
     #No shift
     elif mode == 3:

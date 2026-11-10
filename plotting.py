@@ -1,32 +1,74 @@
+#Plotting tools
+
 import os #System
 import matplotlib.pyplot as plt #Plotting
+from matplotlib.colors import is_color_like
 import numpy as np #Numerical analysis
+
+from load import check_reference_structure
 
 #ASE environment
 from ase.visualize.plot import plot_atoms
 from ase.data.colors import jmol_colors
-from ase.data import atomic_numbers
+from ase.data import atomic_numbers, chemical_symbols #Valid chemical elements
 
 def get_atom_colors(atoms,element_colors=None):
 
+    # Validate user-defined colours, if provided
+    if element_colors is not None:
+
+        # Check each supplied element and its corresponding colour
+        for symbol, colour in element_colors.items():
+
+            # Check that the supplied element symbol is valid
+            if symbol not in chemical_symbols[1:]:
+                raise ValueError(f"Invalid chemical element symbol in element_colors: '{symbol}'.")
+
+            # Check that the supplied colour is valid
+            if not is_color_like(colour):
+                raise ValueError(f"Invalid colour for element '{symbol}': {colour}.")
+
+    #Initialise color array/dictionary
     colors = {}
-
+    #Check each atom in the structure to collect elements
     for i, atom in enumerate(atoms):
-
-        # User-defined colour
-        if (element_colors is not None and atom.symbol in element_colors):
-
+        #Use user-defined colors (highest priority)
+        if element_colors is not None and atom.symbol in element_colors:
             colors[i] = element_colors[atom.symbol]
-
-        # Jmol default
+        #Fallback to Jmol defaults if necessary
         else:
             colors[i] = jmol_colors[atomic_numbers[atom.symbol]]
+
+    #print(colors) #Print color list if desired
 
     return colors
 
 # Prepare a visual copy of a structure using the reference substrate representation.
 def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
 
+    # Validate reference symbols
+    if not reference_symbols:
+        raise ValueError("Reference symbols must contain at least one element symbol.")
+
+    for symbol in reference_symbols:
+        if symbol not in chemical_symbols[1:]:
+            raise ValueError(f"Invalid reference chemical element symbol: '{symbol}'.")
+
+    # Identify reference atoms in both structures
+    current_symbols = atoms.get_chemical_symbols()
+    reference_structure_symbols = reference_atoms.get_chemical_symbols()
+
+    # Identify atoms belonging to the reference substrate in both structures.
+    current_indices = {symbol: [i for i, atom_symbol in enumerate(atoms.get_chemical_symbols()) if atom_symbol == symbol] for symbol in reference_symbols}
+    reference_indices = {symbol: [i for i, atom_symbol in enumerate(reference_atoms.get_chemical_symbols()) if atom_symbol == symbol] for symbol in reference_symbols}
+
+    # No matching reference atoms in the input structure.
+    if not any(current_indices.values()):
+        print(f"Warning: No atoms matching {reference_symbols} found. Plotting original structure without reference.")
+        return atoms.copy()
+
+    # Check reference compatibility.
+    check_reference_structure(atoms, reference_atoms, reference_symbols)
     visual_reference = reference_atoms.copy()
 
     #Get fractional coordinates inside the unit cell.
@@ -34,23 +76,6 @@ def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
     reference_scaled = reference_atoms.get_scaled_positions(wrap=True)
 
     cell = atoms.get_cell()
-
-    #Keep track of the occurrence number of each element.
-    #This allows the reference structure to contain more than one type of substrate atom.
-    reference_indices = {}
-    current_indices = {}
-
-    for symbol in reference_symbols:
-
-        reference_indices[symbol] = [
-            i for i, atom_symbol
-            in enumerate(reference_atoms.get_chemical_symbols())
-            if atom_symbol == symbol]
-
-        current_indices[symbol] = [
-            i for i, atom_symbol
-            in enumerate(atoms.get_chemical_symbols())
-            if atom_symbol == symbol]
 
     # Find one common periodic translation for the whole structure.
     best_shift = np.zeros(3)
@@ -83,10 +108,8 @@ def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
 
             # Keep the common translation giving the smallest total distance for all reference atoms.
             if total_distance < best_distance:
-
                 best_distance = total_distance
                 best_shift = np.array([x_shift, y_shift, 0.0])
-
 
     # Apply the selected periodic translation to the reference substrate.
     reference_scaled += best_shift
@@ -94,9 +117,7 @@ def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
     visual_reference.set_scaled_positions(reference_scaled)
 
     # Collect only the atoms that are NOT part of the reference substrate.
-    non_reference_indices = [
-        i for i, symbol in enumerate(atoms.get_chemical_symbols())
-        if symbol not in reference_symbols]
+    non_reference_indices = [i for i, symbol in enumerate(atoms.get_chemical_symbols()) if symbol not in reference_symbols]
 
     visual_adsorbates = atoms[non_reference_indices]
 
@@ -142,7 +163,7 @@ def plot_surface_views(atoms,output_filename,figsize=(12, 6),dpi=300,title_size=
     #Saving a figure
     fig.savefig(output_filename,dpi=dpi,bbox_inches="tight")
 
-    print(f"Saved: {output_filename}")
+    print(f"Saved: {output_filename}\n")
 
     # Close figure
     plt.close(fig)

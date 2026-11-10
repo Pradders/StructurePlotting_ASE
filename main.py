@@ -1,54 +1,47 @@
 import os #System
-import glob #File locations
 
-from load import load_atoms, get_reference_structure, check_reference_structure
-from inputs import choose_shift_mode
+from load import load_atoms, get_reference_structure
+from inputs import choose_shift_mode, get_reference_settings
 from shift import get_structure_shift,apply_shift
 from plotting import plot_surface_views, prepare_visual_structure
 
 #Define the main function to run imported functions
 def main():
 
-    # Reference structure settings
-
-    # IMPORTANT:
-    # Ensure that the reference structure and input structures have compatible unit cell dimensions and orientation, and that the selected substrate atoms are listed in the same order.
-    # The reference structure is used to provide a consistent substrate representation in the plotted structures.
-    # If the atoms and unit cell do not match, then include_reference should be set to False.
-
-    include_reference = True
-
-    # Folder containing the reference CONTCAR/POSCAR. The folder is called "Reference" by default, but this can be altered.
-    # Set include_reference = False to process structures without an external reference.
-    reference_folder = "Reference" if include_reference else None
+    # Optional reference surface for consistent substrate visualisation.
+    # Ensure the reference and input structures have compatible cell dimensions, cell orientation, and ordering of the selected substrate atoms.
+    # The reference is for visualisation.
 
     # Reference structure settings
-    if include_reference:
+    reference_symbols = ("Ni",) #This can be ignored or changed to None unless an element(s) is to be specified
+    reference_folder = "Reference" #This can be ignored or changed to None unless a folder is to be specified
+    reference_folder, reference_symbols = get_reference_settings(reference_symbols,reference_folder)
 
-        # Elements that belong to the reference substrate
-        reference_symbols = ("Ni",)
-
-        #Collect the atoms within the reference folder
-        reference_atoms = get_reference_structure(
-            reference_folder,
-            repeat=(1, 1, 1)
-        )
-    else:
-        reference_symbols = None
-        reference_atoms = None
+    # Load external reference structure if required
+    reference_atoms = (get_reference_structure(reference_folder, repeat=(1, 1, 1)) if reference_folder is not None else None)
 
     # Find structure files
-    structure_files = [
-        file for file in glob.glob("**/CONTCAR", recursive=True)
-        if reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder
-        ] + [
-        file for file in glob.glob("**/POSCAR", recursive=True)
-        if (reference_folder is None or os.path.basename(os.path.dirname(file)) != reference_folder)
-        and not any(
-            os.path.dirname(file) == os.path.dirname(c)
-            for c in glob.glob("**/CONTCAR", recursive=True)
-        )
-        ]
+    structure_files = []
+
+    for root, dirs, files in os.walk("."):
+
+        # Exclude the reference folder and its contents
+        if reference_folder is not None:
+            reference_path = os.path.abspath(reference_folder)
+            current_path = os.path.abspath(root)
+
+            if os.path.commonpath((reference_path, current_path)) == reference_path:
+                dirs.clear()
+                continue
+
+        # Prefer CONTCAR over POSCAR
+        if "CONTCAR" in files:
+            structure_files.append(os.path.join(root, "CONTCAR"))
+        elif "POSCAR" in files:
+            structure_files.append(os.path.join(root, "POSCAR"))
+
+    if not structure_files:
+        raise FileNotFoundError("No POSCAR or CONTCAR files were found outside the reference folder.")
     print(f"Found {len(structure_files)} structure files.")
 
     # Shift
@@ -65,11 +58,11 @@ def main():
     # Colours
     element_colors = {
         "Ni": "lightgray",
-        "C": "black"}
+        "C": "black"
+        }
 
     # Output directory
     output_folder = "Figures"
-
     os.makedirs(output_folder,exist_ok=True)
 
     # Process each structure
@@ -83,9 +76,8 @@ def main():
         else:
             shifted_atoms = atoms.copy()
 
-        # Check and prepare reference structure
+        # Prepare visual structure using the external reference, if supplied
         if reference_atoms is not None:
-            check_reference_structure(shifted_atoms,reference_atoms,reference_symbols)
             visual_atoms = prepare_visual_structure(shifted_atoms,reference_atoms,reference_symbols)
         else:
             visual_atoms = shifted_atoms.copy()

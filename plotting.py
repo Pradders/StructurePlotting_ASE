@@ -47,7 +47,7 @@ def get_atom_colors(atoms,element_colors=None):
 def prepare_visual_structure(atoms, reference_atoms, reference_symbols):
 
     # Validate reference symbols
-    if not reference_symbols:
+    if isinstance(reference_symbols, str) or not reference_symbols: #This check ensures that the string is located within the tuple/array
         raise ValueError("Reference symbols must contain at least one element symbol.")
 
     for symbol in reference_symbols:
